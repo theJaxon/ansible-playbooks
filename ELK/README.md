@@ -24,6 +24,7 @@ sudo pip3 install ansible
 $ ` ansible-playbook --connection=local  ELK-play.yaml -e 'ansible_python_interpreter=/usr/bin/python'`
 
 * There's an issue with CentOS when using python3 
+![alt text](https://github.com/theJaxon/ansiblePlayBooks/blob/master/Previews/ELK/Issue1.jpg "CentOS ansible error")
 
 * sebp/elk image is quite large `879.36 MB` so it takes some time to pull the image, be patient por favor.
 
@@ -100,8 +101,12 @@ $ ` ansible-playbook --connection=local  ELK-play.yaml -e 'ansible_python_interp
 ```
 - After pulling jenkins the plugin won't install because we need to first type the initial admin password to jenkins
 Attach to the jenkins container after pulling it
+
 $ `sudo docker container exec -it jenkins /bin/bash`
+
 $ `cat /var/jenkins_home/secret/initialAdminPassword`
+
+![](https://github.com/theJaxon/ansiblePlayBooks/blob/master/Previews/ELK/JenkinsInitialScreen.jpg "InitialPasswordJenkins")
 
 ### Displaying Kibana dashboard:
 - By default when you type `http://localhost:5601` nothing will appear because you need to create a [dummy log](https://elk-docker.readthedocs.io/#creating-dummy-log-entry) first so:
