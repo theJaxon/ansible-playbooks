@@ -1,0 +1,74 @@
+- hosts: 127.0.0.1
+  become: true
+  tasks:
+  - name: install requirements for both jenkins & docker
+    package:
+      name:
+        - yum-utils
+        - device-mapper-persistent-data
+        - lvm2
+        - wget
+        - java-1.8.0-openjdk
+      state: present
+
+  - name: setting virtual memory
+    shell: >
+      sysctl -w vm.max_map_count=262144
+
+  - name: Add docker & jenkins repos to /etc/yum.repos.d/
+    get_url:
+      url: "{{item.url}}"
+      dest: /etc/yum.repos.d/{{item.dest}}
+    with_items:
+      - {url: https://download.docker.com/linux/centos/docker-ce.repo , dest: docker-ce.repo }
+      - {url: http://pkg.jenkins-ci.org/redhat-stable/jenkins.repo, dest: jenkins.repo }
+
+  - name: install docker from the added repo
+    package:
+      name:
+        - docker-ce
+        - docker-ce-cli
+        - containerd.io
+      state: present
+
+  - name: start docker service & enable it on boot
+    service:
+      name: docker
+      state: started
+      enabled: yes
+
+  - name: pull the latest elk image from dockerhub /sebp/elk/
+    docker_image:
+      name: sebp/elk
+      source: pull
+
+  - name: start a container from the pulled elk image
+    docker_container:
+      name: elk
+      image: sebp/elk
+      ports:
+        - "5601:5601"
+        - "9200:9200"
+        - "5044:5044"
+      state: started
+
+  - name: pull jenkins image from jenkins/jenkins 
+    docker_image:
+      name: jenkins/jenkins
+      source: pull
+
+  - name: start a container from jenkins pulled image 
+    docker_container:
+      name: jenkins
+      image: jenkins/jenkins
+      ports:
+        - "8080:8080"
+        - "5000:5000"
+      state: started
+
+  - name: install logstash jenkins plugin
+    jenkins_plugin:
+      name: logstash
+      state: latest
+    
+    
