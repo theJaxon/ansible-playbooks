@@ -1,0 +1,32 @@
+- name: remove old docker version 
+  package: 
+    name: "{{ CentosRM }}"
+    state: absent 
+
+- name: install yum-utils
+  package: 
+    name: yum-utils
+    state: present
+
+- name: Add docker CE repository
+  get_url:
+      url: https://download.docker.com/linux/centos/docker-ce.repo
+      dest: /etc/yum.repos.d/docer-ce.repo
+
+- name: add gpg key for the repo
+  rpm_key:
+    key: https://download.docker.com/linux/centos/gpg
+    fingerprint: 060A61C51B558A7F742B77AAC52FEB6B621E9F35
+    state: present
+
+
+- name: Install docker engine
+  package: 
+    name: "{{ DockerCentOSPackages }}"
+    state: present 
+
+- name: start docker & enable it on boot 
+  systemd:
+    name: docker
+    enabled: yes 
+    state: started 

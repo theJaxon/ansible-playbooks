@@ -1,0 +1,11 @@
+---
+# tasks file for Docker
+
+# Ubuntu Tasks
+- include_tasks: ./Ubuntu.yml
+  when: ansible_distribution == "Ubuntu"
+
+
+# CentOS tasks
+- include_tasks: ./CentOS.yml
+  when: ansible_distribution == "CentOS"

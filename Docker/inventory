@@ -1,0 +1,5 @@
+[centos]
+server-name-centos ansible_host=192.168.1.10 ansible_user=vagrant ansible_port=22
+
+[ubuntu]
+server-name-ubuntu ansible_host=127.0.0.1 ansible_user=vagrant ansible_port=2201

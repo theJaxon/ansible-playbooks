@@ -1,0 +1,22 @@
+---
+# vars file for Docker
+CentosRM:
+  - docker
+  - docker-client 
+  - docker-common
+  - docker-latest
+  - docker-latest-logrotate
+  - docker-logrotate
+  - docker-engine
+
+UbuntuPackages:
+  - apt-transport-https 
+  - ca-certificates 
+  - curl 
+  - gnupg-agent 
+  - software-properties-common
+
+DockerCentOSPackages:
+  - docker-ce 
+  - docker-ce-cli 
+  - containerd.io

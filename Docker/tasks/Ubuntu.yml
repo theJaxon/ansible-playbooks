@@ -1,0 +1,40 @@
+- name: remove old docker version [Ubuntu]
+  package: 
+    name: 
+      - docker 
+      - docker-engine
+      - docker.io
+      - containerd
+      - runc
+    state: absent 
+
+- name: apt-get update 
+  apt:
+    update_cache: yes
+
+- name: install required Ubuntu packages 
+  package:
+    name: "{{ UbuntuPackages }}"
+
+- name: Add docker gpg key 
+  apt_key:
+    id: 9DC858229FC7DD38854AE2D88D81803C0EBFCD88
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+
+- name: add repo docker on ubuntu
+  apt_repository:
+    repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu "{{ansible_distribution_release}}" stable
+    state: present
+
+- name: apt-get update 
+  apt:
+    update_cache: yes
+
+- name: install docker on Ubuntu
+  package: 
+    name: 
+      - docker-ce 
+      - docker-ce-cli 
+      - containerd.io 
+    state: present
