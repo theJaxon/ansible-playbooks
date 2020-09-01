@@ -1,0 +1,126 @@
+---
+- hosts: localhost
+  connection: local
+  vars_files:
+    - aws_creds.yml
+  tasks:
+    - name: create ansible VPC
+      ec2_vpc_net:
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        name: ansible-vpc
+        cidr_block: 10.0.0.0/16
+        region: us-east-1
+        tags:
+          CM: ansible
+          module: ec2_vpc_net
+          this: works
+        tenancy: default
+      register: ansible_vpc
+
+    - name: Create a PUBLIC subnet for ansible VPC in us-east-1a
+      ec2_vpc_subnet:
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        vpc_id: "{{ ansible_vpc['vpc']['id'] }}"
+        cidr: 10.0.1.0/24
+        az: us-east-1a
+        map_public: True
+        tags:
+          name: "10.0.1.0-us-east-1a"
+        state: present
+      register: ansible_public_subnet
+
+    - name: Create PRIVATE subnet for ansible VPC in us-east-1b
+      ec2_vpc_subnet:
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        vpc_id: "{{ ansible_vpc['vpc']['id'] }}"
+        cidr: 10.0.2.0/24
+        az: us-east-1b
+        tags:
+          name: "10.0.2.0-us-east-1b"
+        state: present
+      register: ansible_private_subnet
+
+    - name: Create Internet Gateway
+      ec2_vpc_igw:
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        vpc_id: "{{ ansible_vpc['vpc']['id'] }}"
+        state: present
+      register: ansible_igw
+
+    - name: Create public Route table
+      ec2_vpc_route_table:
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        vpc_id: "{{ ansible_vpc['vpc']['id'] }}"
+        region: us-east-1
+        tags:
+          Name: ansible_public_route
+        subnets:
+          - "{{ ansible_public_subnet['subnet']['id'] }}"
+        routes:
+          - dest: 0.0.0.0/0
+            gateway_id: "{{ ansible_igw['gateway_id'] }}"
+      register: ansible_public_route_table
+
+    - name: Create ansibleSG Security Group
+      ec2_group:
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        name: ansibleSG
+        description: ansible security group
+        vpc_id: "{{ ansible_vpc['vpc']['id'] }}"
+        region: us-east-1
+        # Allow HTTP Access
+        rules:
+          - proto: tcp
+            from_port: 80
+            to_port: 80
+            cidr_ip: 0.0.0.0/0
+
+
+    - name: Generate Public EC2 Keys
+      ec2_key:
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        name: ansible-ec2-key
+        region: us-east-1
+        state: present
+
+    # Create EC2 instances
+    - name: Public Subnet Instance
+      ec2_instance:
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        name: "ansible-public-ec2"
+        key_name: ansible-ec2-key
+        vpc_subnet_id: "{{ ansible_public_subnet['subnet']['id'] }}"
+        instance_type: t2.micro
+        state: running
+        security_group: ansibleSG
+        network:
+          assign_public_ip: true
+        image_id: ami-02354e95b39ca8dec
+        wait_timeout: 50
+        tags:
+          CM: ansible
+
+    - name: Private Subnet Instance
+      ec2_instance:
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        name: "ansible-private-ec2"
+        key_name: ansible-ec2-key
+        vpc_subnet_id: "{{ ansible_private_subnet['subnet']['id'] }}"
+        instance_type: t2.micro
+        state: running
+        security_group: default
+        network:
+          assign_public_ip: False
+        image_id: ami-02354e95b39ca8dec
+        wait_timeout: 50
+        tags:
+          CM: ansible
