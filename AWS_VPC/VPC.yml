@@ -89,6 +89,19 @@
         name: ansible-ec2-key
         region: us-east-1
         state: present
+      register: ansible_ec2_key
+
+    - name: Display and store  private key if it exists
+      block:
+        - name: display private key
+          debug:
+            var:  ansible_ec2_key['key']['private_key']
+
+        - name: Store private key
+          copy:
+            content: "{{ ansible_ec2_key['key']['private_key'] }}"
+            dest: /tmp/ec2-key.txt
+      when: ansible_ec2_key['key']['private_key'] is defined
 
     # Create EC2 instances
     - name: Public Subnet Instance
@@ -107,6 +120,11 @@
         wait_timeout: 50
         tags:
           CM: ansible
+      register: public_ec2_instance
+
+    - name: Display Public instance IPV4 address
+      debug:
+        var: public_ec2_instance['instances'][0]['public_ip_address']
 
     - name: Private Subnet Instance
       ec2_instance:
