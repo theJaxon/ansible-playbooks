@@ -74,11 +74,15 @@
         description: ansible security group
         vpc_id: "{{ ansible_vpc['vpc']['id'] }}"
         region: us-east-1
-        # Allow HTTP Access
+        # Allow HTTP and SSH Access
         rules:
           - proto: tcp
             from_port: 80
             to_port: 80
+            cidr_ip: 0.0.0.0/0
+          - proto: tcp
+            from_port: 22
+            to_port: 22
             cidr_ip: 0.0.0.0/0
 
 
@@ -100,7 +104,9 @@
         - name: Store private key
           copy:
             content: "{{ ansible_ec2_key['key']['private_key'] }}"
-            dest: /tmp/ec2-key.txt
+            dest: /tmp/ec2-key.pem
+            mode: '400'
+            force: yes
       when: ansible_ec2_key['key']['private_key'] is defined
 
     # Create EC2 instances
