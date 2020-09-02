@@ -66,15 +66,15 @@
             gateway_id: "{{ ansible_igw['gateway_id'] }}"
       register: ansible_public_route_table
 
-    - name: Create ansibleSG Security Group
+    - name: Create ansibleSG-public Security Group
       ec2_group:
         aws_access_key: "{{ aws_access_key }}"
         aws_secret_key: "{{ aws_secret_key }}"
-        name: ansibleSG
-        description: ansible security group
+        name: ansibleSG-public
+        description: ansible security group for instances in public subnet
         vpc_id: "{{ ansible_vpc['vpc']['id'] }}"
         region: us-east-1
-        # Allow HTTP and SSH Access
+        # Allow HTTP and SSH  Access
         rules:
           - proto: tcp
             from_port: 80
@@ -84,6 +84,38 @@
             from_port: 22
             to_port: 22
             cidr_ip: 0.0.0.0/0
+
+    - name: Create ansibleSG-private Security Group to allow communication between the EC2 instance in public subnet and the instance in private subnet
+      ec2_group:
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        name: ansibleSG-private
+        description: ansible security group for instances in private subnet
+        vpc_id: "{{ ansible_vpc['vpc']['id'] }}"
+        region: us-east-1
+        # Allow ICMP to enable ping from the public instance to the private instance
+        # Allow SSH, HTTP, HTTPS, MySQL/AuroraDB
+        rules:
+          - proto: icmp
+            from_port: -1
+            to_port: -1
+            cidr_ip: 10.0.1.0/24
+          - proto: tcp
+            from_port: 80
+            to_port: 80
+            cidr_ip: 10.0.1.0/24
+          - proto: tcp
+            from_port: 443
+            to_port: 443
+            cidr_ip: 10.0.1.0/24
+          - proto: tcp
+            from_port: 22
+            to_port: 22
+            cidr_ip: 10.0.1.0/24
+          - proto: tcp
+            from_port: 3306
+            to_port: 3306
+            cidr_ip: 10.0.1.0/24
 
 
     - name: Generate Public EC2 Keys
@@ -105,8 +137,6 @@
           copy:
             content: "{{ ansible_ec2_key['key']['private_key'] }}"
             dest: /tmp/ec2-key.pem
-            mode: '400'
-            force: yes
       when: ansible_ec2_key['key']['private_key'] is defined
 
     # Create EC2 instances
@@ -119,7 +149,7 @@
         vpc_subnet_id: "{{ ansible_public_subnet['subnet']['id'] }}"
         instance_type: t2.micro
         state: running
-        security_group: ansibleSG
+        security_group: ansibleSG-public
         network:
           assign_public_ip: true
         image_id: ami-02354e95b39ca8dec
@@ -128,7 +158,7 @@
           CM: ansible
       register: public_ec2_instance
 
-    - name: Display Public instance IPV4 address
+    - name: Display Public instance public IPV4 address
       debug:
         var: public_ec2_instance['instances'][0]['public_ip_address']
 
@@ -141,10 +171,22 @@
         vpc_subnet_id: "{{ ansible_private_subnet['subnet']['id'] }}"
         instance_type: t2.micro
         state: running
-        security_group: default
+        security_group: ansibleSG-private
         network:
           assign_public_ip: False
         image_id: ami-02354e95b39ca8dec
         wait_timeout: 50
         tags:
           CM: ansible
+      register: private_ec2_instance
+
+    - name: Display Private instance private IPV4 address
+      debug:
+        var: private_ec2_instance['instances'][0]['private_ip_address']
+
+    - name: SSH instructions
+      debug:
+        msg:
+          - "You can now ssh into EC2 in public subnet by running ssh ec2-user@{{ public_ec2_instance['instances'][0]['public_ip_address'] }} -i /tmp/ec2-key.pem"
+          - "From within the public instance you can SSH into the private instance after copying the key using: scp -i /tmp/ec2-key.pem ec2-user@{{ public_ec2_instance['instances'][0]['public_ip_address'] }}:/tmp/"
+          - "Then ssh ec2-user@{{ private_ec2_instance['instances'][0]['private_ip_address'] }} -i /tmp/ec2-key.pem"
