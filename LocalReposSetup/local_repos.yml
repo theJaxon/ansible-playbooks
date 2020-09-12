@@ -1,0 +1,27 @@
+---
+- hosts: all
+  vars:
+    local_repos:
+      - file: AppStream
+        name: AppStream
+        description: AppStream local repo
+        baseurl: file:///vagrant/AppStream
+      - file: BaseOS
+        name: BaseOS
+        description: BaseOS local repo
+        baseurl: file:///vagrant/BaseOS
+  tasks:
+    - name: remove all repos existing in /etc/yum.repos.d/
+      shell: "rm -rf /etc/yum.repos.d/*"
+
+    #- name: disable all repos insted of removing them
+    #  command: "yum-config-manager --disable \* "
+
+    - name: setup BaseOS and AppStream local repos
+      yum_repository:
+        file: "{{ item.file }}"
+        name: "{{ item.name }}"
+        description: "{{ item.description }}"
+        baseurl: "{{ item.baseurl }}"
+        gpgcheck: False
+      loop: "{{ local_repos }}"
