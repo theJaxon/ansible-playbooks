@@ -1,0 +1,18 @@
+---
+- name: Gather insights about target directories 
+  stat:
+    path: "{{ item }}"
+  loop: "{{ target_dirs }}"
+  register: target_dirs_stat 
+
+- name: Display insights 
+    # filesizeformat converts size in bytes into human readable formats (Appends Units, ex: kb, mb, gb ..)
+    # https://github.com/lxhunter/ansible-filter-plugins/blob/master/docs/jinja_functions.md#filesizeformat
+    msg: > 
+      "{{ directory['stat']['size'] | filesizeformat }}"
+  loop: "{{ target_dirs_stat['results'] }}"
+  # Limit the output to only show path of the item
+  loop_control:
+    label: "{{ directory['stat']['path'] | d }}"
+    loop_var: directory
+  when: directory['stat']['exists']
