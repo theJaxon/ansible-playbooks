@@ -8,7 +8,7 @@ Example Playbook
 ```yaml
 - hosts: servers
   roles:
-  - { role: username.rolename, x: 42 }
+  - macos-storage-insights
 ```
 
 License
