@@ -1,0 +1,64 @@
+---
+- name: Create gitea namespace
+  community.kubernetes.k8s:
+    name: gitea
+    api_version: v1
+    kind: Namespace
+    state: present
+
+# https://gitea.com/gitea/helm-chart/#installing
+- name: Add gitea helm repository
+  community.kubernetes.helm_repository:
+    name: gitea-charts
+    repo_url: "{{ gitea_repo }}"
+
+- name: Create gitea PVC 
+  community.kubernetes.k8s:
+    state: present 
+    definition: 
+      api_version: v1
+      kind: PersistentVolumeClaim
+      metadata:
+        name: gitea-pvc 
+        namespace: gitea
+        labels:
+          app: gitea
+      spec:
+        storageClassName: local-path
+        resources:
+          requests:
+            storage: 10Gi
+          limits:
+            storage: 10Gi
+        accessModes:
+        - ReadWriteOnce
+      
+- name: Deploy gitea latest version
+  community.kubernetes.helm:
+    name: gitea 
+    chart_ref: gitea-charts/gitea
+    release_namespace: gitea
+    values:
+      service:
+        http:
+          type: NodePort
+          port: 3000
+          nodePort: 30000
+        ssh:
+          type: NodePort 
+          port: 22
+          nodePort: 32222
+      ingress:
+        enabled: false 
+        hosts:
+        - gitea.gitea
+      gitea:
+        admin:
+          username: gitea 
+          password: gitea
+          email: 'jaxon@local.com'
+      persistence:
+        enabled: true
+        existingClaim: gitea-pvc 
+        storageClass: local-path 
+    atomic: true 
