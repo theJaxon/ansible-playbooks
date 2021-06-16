@@ -1,0 +1,10 @@
+---
+app_list:
+- name: access-log
+  image: kiamol/ch14-access-log
+- name: image-of-the-day
+  image: kiamol/ch14-image-of-the-day
+- name: image-gallery
+  image: kiamol/ch14-image-gallery
+
+prometheus_repo: https://prometheus-community.github.io/helm-charts

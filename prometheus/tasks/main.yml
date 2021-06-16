@@ -1,0 +1,37 @@
+---
+- name: Create prometheus Namespace 
+  community.kubernetes.k8s:
+    name: prometheus
+    api_version: v1
+    kind: Namespace
+    state: present
+
+- name: Deploy ECS-V1 apps
+  community.kubernetes.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Deployment
+      metadata:
+        name: "{{ item['name'] }}"
+        namespace: prometheus
+        labels:
+          app: prom-app
+      spec:
+        replicas: 1
+        selector:
+          matchLabels:
+            app: prom-app
+        template:
+          metadata:
+            labels:
+              app: prom-app
+          spec:
+            containers:
+            - image: "{{ item['image'] }}"
+              name: "{{ item['name'] }}"
+  loop: "{{ app_list }}"
+
+- name: Deploy Prometheus
+  include_tasks: prometheus.yml
+  tags: prometheus
