@@ -16,21 +16,78 @@
         name: "{{ item['name'] }}"
         namespace: prometheus
         labels:
-          app: prom-app
+          app: "{{ item['name'] }}"
       spec:
         replicas: 1
         selector:
           matchLabels:
-            app: prom-app
+            app: "{{ item['name'] }}"
         template:
           metadata:
             labels:
-              app: prom-app
+              app: "{{ item['name'] }}"
           spec:
             containers:
             - image: "{{ item['image'] }}"
               name: "{{ item['name'] }}"
   loop: "{{ app_list }}"
+
+# Can't Iterate on port numbers !!
+#  v1.ServiceSpec.Ports: []v1.ServicePort: v1.ServicePort.Port: readUint32: unexpected character: \\\\ufffd
+
+- name: Create a Service for apod-log
+  k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: apod-log
+        namespace: prometheus
+      spec:
+        type: NodePort
+        ports:
+        - port: 80
+          targetPort: 80
+          nodePort: 32712
+        selector:
+          app: apod-log
+
+- name: Create a Service for apod-api
+  k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: apod-api
+        namespace: prometheus
+      spec:
+        type: NodePort
+        ports:
+        - port: 80
+          targetPort: 80
+          nodePort: 32711
+        selector:
+          app: apod-api
+
+- name: Create a Service for apod-web
+  k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Service
+      metadata:
+        name: apod-web
+        namespace: prometheus
+      spec:
+        type: NodePort
+        ports:
+        - port: 80
+          targetPort: 80
+          nodePort: 32710
+        selector:
+          app: apod-web
 
 - name: Deploy Prometheus
   include_tasks: prometheus.yml

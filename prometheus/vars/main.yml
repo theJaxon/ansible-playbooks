@@ -1,10 +1,10 @@
 ---
 app_list:
-- name: access-log
+- name: apod-log
   image: kiamol/ch14-access-log
-- name: image-of-the-day
+- name: apod-api
   image: kiamol/ch14-image-of-the-day
-- name: image-gallery
+- name: apod-web
   image: kiamol/ch14-image-gallery
 
 prometheus_repo: https://prometheus-community.github.io/helm-charts
