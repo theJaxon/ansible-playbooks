@@ -17,6 +17,8 @@
         namespace: prometheus
         labels:
           app: "{{ item['name'] }}"
+        annotations:
+          prometheus.io/path: "{{ item['prometheus_path'] | d('/metrics') }}"
       spec:
         replicas: 1
         selector:

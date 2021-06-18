@@ -4,6 +4,7 @@ app_list:
   image: kiamol/ch14-access-log
 - name: apod-api
   image: kiamol/ch14-image-of-the-day
+  prometheus_path: /actuator/prometheus
 - name: apod-web
   image: kiamol/ch14-image-gallery
 
