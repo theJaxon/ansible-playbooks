@@ -1,0 +1,62 @@
+---
+- name: Create grafana Namespace 
+  community.kubernetes.k8s:
+    name: grafana
+    api_version: v1
+    kind: Namespace
+    state: present
+
+- name: Add grafana helm repository
+  community.kubernetes.helm_repository:
+    name: grafana
+    repo_url: "{{ grafana_repo }}"
+  tags: grafana
+
+- name: Create grafana password secret
+  community.kubernetes.k8s:
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: grafana
+        namespace: grafana
+      data:
+        admin-user: amF4b24=
+        admin-password: amF4b24=
+
+- name: Deploy grafana
+  community.kubernetes.helm:
+    name: grafana 
+    chart_ref: grafana/grafana
+    release_namespace: grafana
+    values:
+      admin:
+        existingSecret: grafana
+      datasources:
+        datasources.yaml: 
+          apiVersion: 1
+          datasources:
+          - name: Prometheus
+            type: prometheus
+            access: proxy
+            url: http://prometheus-server.prometheus:80
+            basicAuth: false
+            version: 1
+            editable: true
+      dashboardProviders:
+        dashboardproviders.yaml:
+          apiVersion: 1
+          providers:
+          - name: 'default'
+            orgId: 1
+            folder: ''
+            type: file
+            disableDeletion: true
+            updateIntervalSeconds: 0
+            options:
+              path: /var/lib/grafana/dashboards
+      dashboards:
+        default:
+          file: apod.json
+              
