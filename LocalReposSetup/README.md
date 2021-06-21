@@ -10,6 +10,8 @@ When working with ansible you might find that you install lots of software packa
 
 First extract the **AppStream** and **BaseOS** directories from CentOS downloaded ISO 
 
+![iso_file_list](https://github.com/theJaxon/ansiblePlayBooks/blob/master/Previews/LocalRepos/iso_file_list.jpg)
+
 Place the folders in the directory where your `Vagrantfile` exists, if the machines are already up then make sure to run `vagrant rsync-auto` so that the files can be located at /vagrant/ directory
 
 Write an ansible playbook that runs on all the managed nodes to do the following:
@@ -54,5 +56,7 @@ Write an ansible playbook that runs on all the managed nodes to do the following
 Now run the command `yum repolist` on any of the hosts
 
 You should be able to see the configured repos with their corresponding description
+
+![repolist](https://github.com/theJaxon/ansiblePlayBooks/blob/master/Previews/LocalRepos/repolist.jpg)
 
 Finally run `yum list` command to verify that all packages from both repos can be listed.
