@@ -1,0 +1,9 @@
+---
+packages:
+- xrdp
+- xfce4-goodies
+- tightvncserver
+
+xsession_file_dest: 
+- /home/ubuntu
+- /etc/skel
